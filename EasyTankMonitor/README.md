@@ -9,3 +9,6 @@ Some infos about how to use it.
 
 
 The script can also be found here: https://pastebin.com/5QJUsgZv
+
+
+More infos and pictures can be found on reddit: https://www.reddit.com/r/ComputerCraft/comments/1dtn156/simple_tank_monitor_program/
