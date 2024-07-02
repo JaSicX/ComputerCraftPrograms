@@ -1,0 +1,131 @@
+local m = peripheral.wrap( "top" )      --monitor
+
+-- warp the tanks as peripherals  !!! THE NAMES FOR THE PERIPHERALS NEED TO BE CHANGED TO YOUR HOOKED UP SETUP !!! 
+local tank4 = peripheral.wrap("openblocks_tank_8")  -- top
+local tank3 = peripheral.wrap("openblocks_tank_7")  -- middle top
+local tank2 = peripheral.wrap("openblocks_tank_6")  -- middle bottom
+local tank1 = peripheral.wrap("openblocks_tank_5")  -- bottom
+
+-- setting the dimensions of the tank you have  !!! THESE VALUES NEED TO BE CHANGED ACOORDING TO YOUR TANK SIZE !!!
+tankStateTable = {}
+tankStateTable.hight = 4
+tankStateTable.width = 12
+tankStateTable.lenght = 14
+
+-- Init the Disply values 
+tankStateTable.singleTankCapacity = tank1.getTankInfo()[1].capacity --16000
+tankStateTable.currentFillstate = 0
+tankStateTable.tankCapacity = (tankStateTable.hight * tankStateTable.width * tankStateTable.lenght * tankStateTable.singleTankCapacity) -- h * W * L * Cpacity
+
+-- padding the String to the left
+local function padLeft(str, w)
+    return string.rep(" ", w - #str) .. str
+end
+
+-- function for number formatting to better read the numbers and group them into three
+function formatNumberWithGrouping(number)
+    local numberString = tostring(number)
+    local parts = {}
+    
+    -- Loop backwards throug the number
+    for i = #numberString, 1, -1 do
+        -- add the current value to the table
+        table.insert(parts, 1, numberString:sub(i, i))
+        -- Put a point after every thrid number
+        if ( (#numberString - i + 1) % 3 == 0 ) and (i > 1) then
+            table.insert(parts, 1, ".")
+        end
+    end
+    
+    -- make the table back to a string
+    return table.concat(parts)
+end
+
+
+-- calculate the current fillsate of the tank
+local function calculateTankFillState()
+    local tank1current = tank1.getTankInfo()[1].contents.amount
+    local tank2current = tank2.getTankInfo()[1].contents.amount
+    local tank3current = tank3.getTankInfo()[1].contents.amount
+    local tank4current = tank4.getTankInfo()[1].contents.amount
+
+    tank1current = tank1current * tankStateTable.width * tankStateTable.lenght
+    tank2current = tank2current * tankStateTable.width * tankStateTable.lenght
+    tank3current = tank3current * tankStateTable.width * tankStateTable.lenght
+    tank4current = tank4current * tankStateTable.width * tankStateTable.lenght
+    
+    tankStateTable.currentFillstate = (tank1current + tank2current + tank3current + tank4current)
+end
+
+-- updates the Monitor and displays the current fill state
+local function mainUILOOP()
+
+    m.setTextScale(0.5)
+    local w, h = m.getSize()
+    local total = tankStateTable.tankCapacity
+
+    --start timer for calculateing and updating every 5 sek
+    os.startTimer(5)
+    while true do
+        local stored = 0
+        
+        calculateTankFillState()
+        stored = tankStateTable.currentFillstate
+
+        m.clear()
+        m.setCursorPos(1, 2)
+        m.setTextColour(colours.orange)
+        m.write("Fuel Current: ")
+        m.setTextColour(colours.white)
+        m.write(padLeft(tostring(formatNumberWithGrouping(stored) .. " mB"), w - 14))
+
+        m.setCursorPos(1, 4)
+        m.setTextColour(colours.orange)
+        m.write("Total Capacity:")
+        m.setTextColour(colours.white)
+        m.write(padLeft(tostring(formatNumberWithGrouping(total) .. " mB"), w - 15))
+
+        m.setCursorPos(1, 6)
+        m.setTextColour(colors.orange)
+        m.write("%:")
+        m.setTextColour(colors.white)
+        m.write(padLeft(tostring((stored/total) * 100), w - 3))
+
+        local p = (w-2) * stored / total
+
+        m.setBackgroundColour(colours.lightGrey)
+        m.setCursorPos(2, 8)
+        m.write(string.rep(" ", w-2))
+        m.setBackgroundColour(colours.red)
+        m.setCursorPos(2, 8)
+        m.write(string.rep(" ", p))
+        m.setBackgroundColour(colours.black)
+
+        os.pullEvent("timer")
+        os.startTimer(5)
+    end
+end
+
+-- the main funrction start for the programm
+local function main()
+
+    --Debug stuff---------------------------------------------------------- 
+
+    --local table = tank3.getTankInfo()
+    --peripheral.getMethods("openblocks_tank_5")
+
+    --print("____________________________________ \n \n")
+    --print(table)
+
+    --for index, value in pairs(tankFillStateTable) do
+    --    print(index, "  ",value)
+    --end
+    --calculateTankFillState()
+    -------------------------------------------------------------
+
+    mainUILOOP()
+end
+
+main()
+
+
